@@ -1,10 +1,10 @@
-package com.example.demo.reminder.mapper;
+package com.example.demo.reminder.model.mapper;
 
-import com.example.demo.reminder.dto.ReminderCreateDto;
-import com.example.demo.reminder.dto.ReminderReadDto;
-import com.example.demo.reminder.dto.ReminderUpdateDto;
-import com.example.demo.reminder.entity.Reminder;
-import com.example.demo.user.entity.User;
+import com.example.demo.reminder.model.dto.ReminderCreateDto;
+import com.example.demo.reminder.model.dto.ReminderReadDto;
+import com.example.demo.reminder.model.dto.ReminderUpdateDto;
+import com.example.demo.reminder.model.entity.Reminder;
+import com.example.demo.user.model.entity.User;
 import org.mapstruct.*;
 
 @Mapper(componentModel = "spring")

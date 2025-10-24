@@ -10,7 +10,7 @@ import java.lang.annotation.*;
 @Constraint(validatedBy = FieldValidator.class)
 @Target({ ElementType.FIELD, ElementType.PARAMETER })
 @Retention(RetentionPolicy.RUNTIME)
-public @interface Field {
+public @interface ValidField {
     String message() default "Invalid field value";
     String name() default "Field";
     boolean nullable() default true;

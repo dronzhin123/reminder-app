@@ -1,6 +1,6 @@
-package com.example.demo.reminder.entity;
+package com.example.demo.reminder.model.entity;
 
-import com.example.demo.user.entity.User;
+import com.example.demo.user.model.entity.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

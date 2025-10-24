@@ -1,3 +1,3 @@
-package com.example.demo.user.dto;
+package com.example.demo.user.model.dto;
 
 public record UserReadDto(Long id, String username, String email) {}

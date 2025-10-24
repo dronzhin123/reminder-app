@@ -1,4 +1,4 @@
-package com.example.demo.reminder.dto;
+package com.example.demo.reminder.model.dto;
 
 import java.time.LocalDateTime;
 
