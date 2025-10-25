@@ -1,11 +1,12 @@
-package com.example.demo.reminder.logic.controller;
+package com.example.demo.reminder.controller;
 
 import com.example.demo.reminder.model.dto.ReminderUpdateDto;
+import com.example.demo.user.service.UserService;
 import com.example.demo.wrapper.ApiResponseWrapper;
 import com.example.demo.reminder.model.dto.ReminderCreateDto;
 import com.example.demo.reminder.model.dto.ReminderReadDto;
 import com.example.demo.user.model.entity.User;
-import com.example.demo.reminder.logic.service.ReminderService;
+import com.example.demo.reminder.service.ReminderService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -21,13 +22,14 @@ import org.springframework.web.bind.annotation.*;
 public class ReminderController {
 
     private final ReminderService reminderService;
+    private final UserService userService;
 
     @PostMapping("/create")
     public ResponseEntity<ApiResponseWrapper<ReminderReadDto>> createReminder(
             @RequestBody @Valid ReminderCreateDto dto,
             Authentication authentication) {
 
-        User user = (User) authentication.getPrincipal();
+        User user = userService.getUser(authentication);
         ReminderReadDto data = reminderService.saveReminder(dto, user);
         return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponseWrapper<>("Reminder created successfully", data));
     }
@@ -37,7 +39,7 @@ public class ReminderController {
             @PathVariable Long reminderId,
             Authentication authentication) {
 
-        User user = (User) authentication.getPrincipal();
+        User user = userService.getUser(authentication);
         ReminderReadDto data =  reminderService.getReminder(reminderId, user);
         return ResponseEntity.ok(new ApiResponseWrapper<>("Reminder read successfully", data));
     }
@@ -48,7 +50,7 @@ public class ReminderController {
             @RequestParam(defaultValue = "10") int size,
             Authentication authentication) {
 
-        User user = (User) authentication.getPrincipal();
+        User user = userService.getUser(authentication);
         Page<ReminderReadDto> data =  reminderService.getReminders(user, PageRequest.of(page, size));
         return ResponseEntity.ok(new ApiResponseWrapper<>("Reminders retrieved successfully", data));
     }
@@ -59,7 +61,7 @@ public class ReminderController {
             @RequestBody @Valid ReminderUpdateDto dto,
             Authentication authentication) {
 
-        User user = (User) authentication.getPrincipal();
+        User user = userService.getUser(authentication);
         ReminderReadDto data = reminderService.updateReminder(reminderId, dto, user);
         return ResponseEntity.ok(new ApiResponseWrapper<>("Reminder updated successfully", data));
     }
@@ -69,7 +71,7 @@ public class ReminderController {
             @PathVariable Long reminderId,
             Authentication authentication) {
 
-        User user = (User) authentication.getPrincipal();
+        User user = userService.getUser(authentication);
         reminderService.deleteReminder(reminderId, user);
         return ResponseEntity.ok(new ApiResponseWrapper<>("Reminder deleted successfully", null));
     }

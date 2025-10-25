@@ -2,6 +2,7 @@ package com.example.demo.handler;
 
 import com.example.demo.exception.EntityAlreadyExistsException;
 import com.example.demo.exception.EntityNotFoundException;
+import com.example.demo.exception.PasswordsNotMatchException;
 import com.example.demo.wrapper.ApiResponseWrapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,22 +16,28 @@ import java.util.Objects;
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
+    private ResponseEntity<ApiResponseWrapper<Object>> buildResponse(HttpStatus status, String message) {
+        return ResponseEntity.status(status).body(new ApiResponseWrapper<>(message, null));
+    }
+
     @ExceptionHandler(EntityNotFoundException.class)
-    public ResponseEntity<ApiResponseWrapper<Object>> handleEntityNotFoundException(EntityNotFoundException exception) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(new ApiResponseWrapper<>(exception.getMessage(), null));
+    public ResponseEntity<ApiResponseWrapper<Object>> handleEntityNotFound(EntityNotFoundException exception) {
+        return buildResponse(HttpStatus.NOT_FOUND, exception.getMessage());
     }
 
     @ExceptionHandler(EntityAlreadyExistsException.class)
-    public ResponseEntity<ApiResponseWrapper<Object>> handleEntityAlreadyExistsException(EntityAlreadyExistsException exception) {
-        return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(new ApiResponseWrapper<>(exception.getMessage(), null));
+    public ResponseEntity<ApiResponseWrapper<Object>> handleEntityAlreadyExists(EntityAlreadyExistsException exception) {
+        return buildResponse(HttpStatus.CONFLICT, exception.getMessage());
     }
 
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ApiResponseWrapper<Object>> handleBadCredentials(BadCredentialsException exception) {
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(new ApiResponseWrapper<>(exception.getMessage(), null));
+        return buildResponse(HttpStatus.UNAUTHORIZED, exception.getMessage());
+    }
+
+    @ExceptionHandler(PasswordsNotMatchException.class)
+    public ResponseEntity<ApiResponseWrapper<Object>> handlePasswordsNotMatch(PasswordsNotMatchException exception) {
+        return buildResponse(HttpStatus.BAD_REQUEST, exception.getMessage());
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -39,8 +46,12 @@ public class GlobalExceptionHandler {
                 .map(error -> Objects.toString(error.getDefaultMessage(), "Validation failed"))
                 .findFirst()
                 .orElse("Validation failed");
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponseWrapper<>(message, null));
+        return buildResponse(HttpStatus.BAD_REQUEST, message);
     }
 
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ApiResponseWrapper<Object>> handleGenericException(Exception exception) {
+        return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Internal server error");
+    }
 
 }

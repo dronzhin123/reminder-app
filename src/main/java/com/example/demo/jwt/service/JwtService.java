@@ -1,5 +1,6 @@
 package com.example.demo.jwt.service;
 
+import com.example.demo.jwt.dto.JwtTokenDto;
 import com.example.demo.user.model.entity.User;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
@@ -14,14 +15,14 @@ public class JwtService {
 
     private final JwtEncoder jwtEncoder;
 
-    public final long expirationIn;
+    private final long expirationIn;
 
     public JwtService(JwtEncoder jwtEncoder, @Value("${app.security.jwt.expiration}") long expirationIn) {
         this.jwtEncoder = jwtEncoder;
         this.expirationIn = expirationIn;
     }
 
-    public String generateToken(User user) {
+    public JwtTokenDto generateToken(User user) {
         Instant now = Instant.now();
         JwtClaimsSet claims = JwtClaimsSet.builder()
                 .issuer("reminder-app")
@@ -29,8 +30,7 @@ public class JwtService {
                 .issuedAt(now)
                 .expiresAt(now.plusSeconds(expirationIn))
                 .build();
-
-        return jwtEncoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
+        return new JwtTokenDto(jwtEncoder.encode(JwtEncoderParameters.from(claims)).getTokenValue(), expirationIn);
     }
 
 }

@@ -25,6 +25,8 @@ public class User implements UserDetails{
 
     private String email;
 
+    private String telegram;
+
     @Enumerated(EnumType.STRING) @Builder.Default
     private Role role = Role.ROLE_USER;
 

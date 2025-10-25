@@ -24,4 +24,5 @@ public interface ReminderMapper {
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "id", ignore = true) @Mapping(target = "user", ignore = true)
     void update(@MappingTarget Reminder reminder, ReminderUpdateDto dto);
+
 }
