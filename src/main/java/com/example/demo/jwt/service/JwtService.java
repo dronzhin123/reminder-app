@@ -26,7 +26,7 @@ public class JwtService {
         Instant now = Instant.now();
         JwtClaimsSet claims = JwtClaimsSet.builder()
                 .issuer("reminder-app")
-                .subject(user.getUsername())
+                .subject(String.valueOf(user.getId()))
                 .issuedAt(now)
                 .expiresAt(now.plusSeconds(expirationIn))
                 .build();

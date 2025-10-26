@@ -2,7 +2,6 @@ package com.example.demo.user.service;
 
 import com.example.demo.exception.EntityAlreadyExistsException;
 import com.example.demo.exception.EntityNotFoundException;
-import com.example.demo.exception.PasswordsNotMatchException;
 import com.example.demo.user.model.dto.*;
 import com.example.demo.user.model.entity.User;
 import com.example.demo.user.model.mapper.UserMapper;
@@ -23,33 +22,28 @@ public class UserService {
     private final AuthenticationManager authenticationManager;
     private final PasswordEncoder passwordEncoder;
 
-    public Authentication getAuthentication(UserLoginDto dto) {
-        return authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(dto.username(), dto.password()));
-    }
-
     public User getUser(UserLoginDto dto) {
         Authentication authentication = authenticationManager
                 .authenticate(new UsernamePasswordAuthenticationToken(dto.username(), dto.password()));
-        return getUser(authentication);
+        return userRepository.findByUsername(dto.username())
+                .orElseThrow(() -> new EntityNotFoundException(User.class, "username", dto.username()));
     }
 
     public User getUser(Authentication authentication) {
-        return findByUsername(authentication.getName());
+        Long userId = Long.parseLong(authentication.getName());
+        return userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException(User.class, "id", userId));
     }
 
     public UserReadDto saveUser(UserCreateDto dto) {
         validatePasswordsMatch(dto.password(), dto.repeatPassword());
-        validateUsernameUnique(dto.username());
-        validateEmailUnique(dto.email());
-        validateTelegramUnique(dto.telegram());
+        validateUserNotExists(dto.username(), dto.email(), dto.telegram());
         User user = userMapper.toUser(dto);
         user.setPassword(passwordEncoder.encode(dto.password()));
         return userMapper.toDto(userRepository.save(user));
     }
 
     public UserReadDto updateUser(User user, UserUpdateDto dto) {
-        validateEmailUnique(dto.email(), user.getId());
-        validateTelegramUnique(dto.telegram(), user.getId());
+        validateUserNotExists(user.getId(), dto.email(), dto.telegram());
         userMapper.update(user, dto);
         return userMapper.toDto(userRepository.save(user));
     }
@@ -60,42 +54,28 @@ public class UserService {
         userRepository.save(user);
     }
 
-    private User findByUsername(String username) {
-        return userRepository.findByUsername(username)
-                .orElseThrow(() -> new EntityNotFoundException(User.class, "username", username));
-    }
-
     private void validatePasswordsMatch(String password, String repeatPassword) {
         if (!password.equals(repeatPassword)) {
-            throw new PasswordsNotMatchException();
+            throw new IllegalArgumentException("Password and password confirmation must match");
         }
     }
 
-    private void validateUsernameUnique(String username) {
+    private void validateUserNotExists(String username, String email, String telegram) {
         if (username != null && userRepository.existsByUsername(username)) {
             throw new EntityAlreadyExistsException(User.class, "username", username);
         }
-    }
-
-    private void validateEmailUnique(String email) {
         if (email != null && userRepository.existsByEmail(email)) {
             throw new EntityAlreadyExistsException(User.class, "email", email);
         }
-    }
-
-    private void validateTelegramUnique(String telegram) {
         if (telegram != null && userRepository.existsByTelegram(telegram)) {
             throw new EntityAlreadyExistsException(User.class, "telegram", telegram);
         }
     }
 
-    private void validateEmailUnique(String email, Long userId) {
+    private void validateUserNotExists(Long userId, String email, String telegram) {
         if (email != null && userRepository.existsByEmailAndIdNot(email, userId)) {
             throw new EntityAlreadyExistsException(User.class, "email", email);
         }
-    }
-
-    private void validateTelegramUnique(String telegram, Long userId) {
         if (telegram != null && userRepository.existsByTelegramAndIdNot(telegram, userId)) {
             throw new EntityAlreadyExistsException(User.class, "telegram", telegram);
         }

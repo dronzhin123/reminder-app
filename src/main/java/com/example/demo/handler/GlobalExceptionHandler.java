@@ -2,7 +2,6 @@ package com.example.demo.handler;
 
 import com.example.demo.exception.EntityAlreadyExistsException;
 import com.example.demo.exception.EntityNotFoundException;
-import com.example.demo.exception.PasswordsNotMatchException;
 import com.example.demo.wrapper.ApiResponseWrapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -35,8 +34,8 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.UNAUTHORIZED, exception.getMessage());
     }
 
-    @ExceptionHandler(PasswordsNotMatchException.class)
-    public ResponseEntity<ApiResponseWrapper<Object>> handlePasswordsNotMatch(PasswordsNotMatchException exception) {
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ApiResponseWrapper<Object>> handleIllegalArgument(IllegalArgumentException exception) {
         return buildResponse(HttpStatus.BAD_REQUEST, exception.getMessage());
     }
 

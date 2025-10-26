@@ -11,8 +11,11 @@ import com.example.demo.reminder.repository.ReminderRepository;
 import com.example.demo.user.model.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -21,8 +24,14 @@ public class ReminderService {
     private final ReminderRepository reminderRepository;
     private final ReminderMapper reminderMapper;
 
+    private final Set<String> allowedSortByValues = Set.of("title", "reminderDateTime");
+
+    private final Set<String> allowedDirectionValues = Set.of("asc", "desc");
+
     public ReminderReadDto saveReminder(ReminderCreateDto dto, User user) {
-        validateUniqueTitle(dto.title(), user.getId());
+        if (dto.title() != null && reminderRepository.existsByTitleAndUserId(dto.title(), user.getId())) {
+            throw new EntityAlreadyExistsException(Reminder.class, "title", dto.title());
+        }
         Reminder reminder = reminderMapper.toReminder(dto, user);
         return reminderMapper.toDto(reminderRepository.save(reminder));
     }
@@ -32,12 +41,20 @@ public class ReminderService {
         return reminderMapper.toDto(reminder);
     }
 
-    public Page<ReminderReadDto> getReminders(User user, Pageable pageable) {
-        return reminderRepository.findByUserId(user.getId(), pageable).map(reminderMapper::toDto);
+    public Page<ReminderReadDto> getReminders(User user, int page, int size, String sortBy, String direction, String keyword) {
+        PageRequest pageRequest = createPageRequest(page, size, sortBy, direction);
+        if (keyword == null || keyword.isEmpty()) {
+            return reminderRepository.findByUserId(user.getId(), pageRequest)
+                    .map(reminderMapper::toDto);
+        }
+        return reminderRepository.findByKeyword(user.getId(), keyword, pageRequest)
+                .map(reminderMapper::toDto);
     }
 
     public ReminderReadDto updateReminder(Long reminderId, ReminderUpdateDto dto, User user) {
-        validateUniqueTitle(dto.title(), user.getId(), reminderId);
+        if (dto.title() != null && reminderRepository.existsByTitleAndUserIdAndIdNot(dto.title(), user.getId(), reminderId)) {
+            throw new EntityAlreadyExistsException(Reminder.class, "title", dto.title());
+        }
         Reminder reminder = findByIdAndUserId(reminderId, user.getId());
         reminderMapper.update(reminder, dto);
         return reminderMapper.toDto(reminderRepository.save(reminder));
@@ -53,16 +70,15 @@ public class ReminderService {
                 .orElseThrow(() -> new EntityNotFoundException(Reminder.class, "id", reminderId));
     }
 
-    private void validateUniqueTitle(String title, Long userId) {
-        if (title != null && reminderRepository.existsByTitleAndUserId(title, userId)) {
-            throw new EntityAlreadyExistsException(Reminder.class, "title", title);
+    private PageRequest createPageRequest(int page, int size, String sortBy, String direction) {
+        if (!allowedSortByValues.contains(sortBy)) {
+            throw new IllegalArgumentException("Illegal sortBy: " + sortBy + ", allowed values: " + allowedSortByValues);
         }
-    }
-
-    private void validateUniqueTitle(String title, Long userId, Long reminderId) {
-        if (title != null && reminderRepository.existsByTitleAndUserIdAndIdNot(title, userId, reminderId)) {
-            throw new EntityAlreadyExistsException(Reminder.class, "title", title);
+        if (!allowedDirectionValues.contains(direction)) {
+            throw new IllegalArgumentException("Illegal direction: " + direction + ", allowed values: " + allowedDirectionValues);
         }
+        Sort sort = direction.equals("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
+        return PageRequest.of(page, size, sort);
     }
 
 }

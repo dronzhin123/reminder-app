@@ -34,7 +34,7 @@ public class ReminderController {
         return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponseWrapper<>("Reminder created successfully", data));
     }
 
-    @GetMapping("/find/{reminderId}")
+    @GetMapping("/{reminderId}")
     public ResponseEntity<ApiResponseWrapper<ReminderReadDto>> getReminder(
             @PathVariable Long reminderId,
             Authentication authentication) {
@@ -48,10 +48,13 @@ public class ReminderController {
     public ResponseEntity<ApiResponseWrapper<Page<ReminderReadDto>>> getReminders(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "reminderDateTime") String sortBy,
+            @RequestParam(defaultValue = "desc") String direction,
+            @RequestParam(required = false) String keyword,
             Authentication authentication) {
 
         User user = userService.getUser(authentication);
-        Page<ReminderReadDto> data =  reminderService.getReminders(user, PageRequest.of(page, size));
+        Page<ReminderReadDto> data =  reminderService.getReminders(user, page, size, sortBy, direction, keyword);
         return ResponseEntity.ok(new ApiResponseWrapper<>("Reminders retrieved successfully", data));
     }
 
