@@ -11,16 +11,16 @@ public interface UserMapper {
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "role", ignore = true)
-    @Mapping(target = "password", ignore = true)
-    User toUser(UserCreateDto dto);
+    @Mapping(target = "password", source = "password")
+    User toUser(UserCreateDto dto, String password);
 
     UserReadDto toDto(User user);
 
-    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "password", ignore = true)
     @Mapping(target = "role", ignore = true)
+    @Mapping(target = "password", ignore = true)
     @Mapping(target = "authorities", ignore = true)
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     void update(@MappingTarget User user, UserUpdateDto dto);
 
 }

@@ -12,17 +12,10 @@ public interface ReminderMapper {
 
     ReminderReadDto toDto(Reminder reminder);
 
-    default Reminder toReminder(ReminderCreateDto dto, User user) {
-        return Reminder.builder()
-                .title(dto.title())
-                .description(dto.description())
-                .reminderDateTime(dto.reminderDateTime())
-                .user(user)
-                .build();
-    }
+    @Mapping(target = "user", source = "user")
+    Reminder toReminder(ReminderCreateDto dto, User user);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-    @Mapping(target = "id", ignore = true) @Mapping(target = "user", ignore = true)
     void update(@MappingTarget Reminder reminder, ReminderUpdateDto dto);
 
 }

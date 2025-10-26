@@ -37,8 +37,7 @@ public class UserService {
     public UserReadDto saveUser(UserCreateDto dto) {
         validatePasswordsMatch(dto.password(), dto.repeatPassword());
         validateUserNotExists(dto.username(), dto.email(), dto.telegram());
-        User user = userMapper.toUser(dto);
-        user.setPassword(passwordEncoder.encode(dto.password()));
+        User user = userMapper.toUser(dto, passwordEncoder.encode(dto.password()));
         return userMapper.toDto(userRepository.save(user));
     }
 
