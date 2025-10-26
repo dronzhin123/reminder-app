@@ -15,6 +15,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     boolean existsByTelegram(String telegram);
 
+    boolean existsByUsernameAndIdNot(String username, Long userId);
+
     boolean existsByEmailAndIdNot(String email, Long id);
 
     boolean existsByTelegramAndIdNot(String telegram, Long id);

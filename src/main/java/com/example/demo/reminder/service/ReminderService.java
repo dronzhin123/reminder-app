@@ -1,7 +1,5 @@
 package com.example.demo.reminder.service;
 
-import com.example.demo.exception.EntityAlreadyExistsException;
-import com.example.demo.exception.EntityNotFoundException;
 import com.example.demo.reminder.model.dto.ReminderCreateDto;
 import com.example.demo.reminder.model.dto.ReminderReadDto;
 import com.example.demo.reminder.model.dto.ReminderUpdateDto;
@@ -25,12 +23,11 @@ public class ReminderService {
     private final ReminderMapper reminderMapper;
 
     private final Set<String> allowedSortByValues = Set.of("title", "reminderDateTime");
-
     private final Set<String> allowedDirectionValues = Set.of("asc", "desc");
 
     public ReminderReadDto saveReminder(ReminderCreateDto dto, User user) {
         if (dto.title() != null && reminderRepository.existsByTitleAndUserId(dto.title(), user.getId())) {
-            throw new EntityAlreadyExistsException(Reminder.class, "title", dto.title());
+            throw new RuntimeException("Reminder with title '" + dto.title() + "' already exists for this user");
         }
         Reminder reminder = reminderMapper.toReminder(dto, user);
         return reminderMapper.toDto(reminderRepository.save(reminder));
@@ -53,7 +50,7 @@ public class ReminderService {
 
     public ReminderReadDto updateReminder(Long reminderId, ReminderUpdateDto dto, User user) {
         if (dto.title() != null && reminderRepository.existsByTitleAndUserIdAndIdNot(dto.title(), user.getId(), reminderId)) {
-            throw new EntityAlreadyExistsException(Reminder.class, "title", dto.title());
+            throw new RuntimeException("Reminder with title '" + dto.title() + "' already exists for this user");
         }
         Reminder reminder = findByIdAndUserId(reminderId, user.getId());
         reminderMapper.update(reminder, dto);
@@ -67,15 +64,15 @@ public class ReminderService {
 
     private Reminder findByIdAndUserId(Long reminderId, Long userId) {
         return reminderRepository.findByIdAndUserId(reminderId, userId)
-                .orElseThrow(() -> new EntityNotFoundException(Reminder.class, "id", reminderId));
+                .orElseThrow(() -> new RuntimeException("Reminder not found with id " + reminderId + " for this user"));
     }
 
     private PageRequest createPageRequest(int page, int size, String sortBy, String direction) {
         if (!allowedSortByValues.contains(sortBy)) {
-            throw new IllegalArgumentException("Illegal sortBy: " + sortBy + ", allowed values: " + allowedSortByValues);
+            throw new RuntimeException("Invalid sortBy value: " + sortBy + ". Allowed values: " + allowedSortByValues);
         }
         if (!allowedDirectionValues.contains(direction)) {
-            throw new IllegalArgumentException("Illegal direction: " + direction + ", allowed values: " + allowedDirectionValues);
+            throw new RuntimeException("Invalid direction value: " + direction + ". Allowed values: " + allowedDirectionValues);
         }
         Sort sort = direction.equals("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
         return PageRequest.of(page, size, sort);

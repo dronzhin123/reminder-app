@@ -1,7 +1,5 @@
 package com.example.demo.handler;
 
-import com.example.demo.exception.EntityAlreadyExistsException;
-import com.example.demo.exception.EntityNotFoundException;
 import com.example.demo.wrapper.ApiResponseWrapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,23 +17,13 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(status).body(new ApiResponseWrapper<>(message, null));
     }
 
-    @ExceptionHandler(EntityNotFoundException.class)
-    public ResponseEntity<ApiResponseWrapper<Object>> handleEntityNotFound(EntityNotFoundException exception) {
-        return buildResponse(HttpStatus.NOT_FOUND, exception.getMessage());
-    }
-
-    @ExceptionHandler(EntityAlreadyExistsException.class)
-    public ResponseEntity<ApiResponseWrapper<Object>> handleEntityAlreadyExists(EntityAlreadyExistsException exception) {
-        return buildResponse(HttpStatus.CONFLICT, exception.getMessage());
-    }
-
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ApiResponseWrapper<Object>> handleBadCredentials(BadCredentialsException exception) {
         return buildResponse(HttpStatus.UNAUTHORIZED, exception.getMessage());
     }
 
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<ApiResponseWrapper<Object>> handleIllegalArgument(IllegalArgumentException exception) {
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<ApiResponseWrapper<Object>> handleRuntimeException(RuntimeException exception) {
         return buildResponse(HttpStatus.BAD_REQUEST, exception.getMessage());
     }
 

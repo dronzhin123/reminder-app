@@ -4,6 +4,8 @@ import com.example.demo.validation.annotation.ValidField;
 import jakarta.validation.constraints.Email;
 
 public record UserUpdateDto(
+        @ValidField(name = "Username", nullable = false, allowSpaces = false, maxSize = 50)
+        String username,
         @ValidField(name = "Email", allowSpaces = false, maxSize = 50) @Email
         String email,
         @ValidField(name = "Telegram", allowSpaces = false, maxSize = 50)
