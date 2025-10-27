@@ -35,8 +35,7 @@ public class FieldValidator implements ConstraintValidator<ValidField, String> {
             return false;
         }
 
-        int size = field.length();
-        if (size < minSize || size > maxSize) {
+        if (field.length() < minSize || field.length() > maxSize) {
             buildViolation(context, fieldName + " must be between " + minSize + " and " + maxSize + " characters");
             return false;
         }
@@ -54,4 +53,5 @@ public class FieldValidator implements ConstraintValidator<ValidField, String> {
         context.buildConstraintViolationWithTemplate(message)
                 .addConstraintViolation();
     }
+
 }

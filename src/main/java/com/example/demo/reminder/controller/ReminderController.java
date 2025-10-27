@@ -1,5 +1,6 @@
 package com.example.demo.reminder.controller;
 
+import com.example.demo.reminder.model.dto.ReminderFilterDto;
 import com.example.demo.reminder.model.dto.ReminderUpdateDto;
 import com.example.demo.user.service.UserService;
 import com.example.demo.wrapper.ApiResponseWrapper;
@@ -10,7 +11,6 @@ import com.example.demo.reminder.service.ReminderService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -46,15 +46,11 @@ public class ReminderController {
 
     @GetMapping("/list")
     public ResponseEntity<ApiResponseWrapper<Page<ReminderReadDto>>> getReminders(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "reminderDateTime") String sortBy,
-            @RequestParam(defaultValue = "desc") String direction,
-            @RequestParam(required = false) String keyword,
+            @ModelAttribute ReminderFilterDto dto,
             Authentication authentication) {
 
         User user = userService.getUser(authentication);
-        Page<ReminderReadDto> data =  reminderService.getReminders(user, page, size, sortBy, direction, keyword);
+        Page<ReminderReadDto> data =  reminderService.getReminders(user, dto);
         return ResponseEntity.ok(new ApiResponseWrapper<>("Reminders retrieved successfully", data));
     }
 

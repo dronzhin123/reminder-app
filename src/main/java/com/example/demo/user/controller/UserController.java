@@ -42,4 +42,11 @@ public class UserController {
         return ResponseEntity.ok(new ApiResponseWrapper<>("User updated successfully", data));
     }
 
+    @PostMapping("/delete")
+    public ResponseEntity<ApiResponseWrapper<Void>> deleteUser(Authentication authentication) {
+        User user = userService.getUser(authentication);
+        userService.deleteUser(user);
+        return ResponseEntity.ok(new ApiResponseWrapper<>("User deleted successfully", null));
+    }
+
 }

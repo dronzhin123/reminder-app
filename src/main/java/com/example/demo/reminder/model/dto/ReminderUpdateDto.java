@@ -13,4 +13,4 @@ public record ReminderUpdateDto(
         String description,
         @NotNull(message = "Reminder date/time must not be null")
         @Future(message = "Reminder date/time must be in the future")
-        LocalDateTime reminderDateTime) {}
+        LocalDateTime remindAt) {}

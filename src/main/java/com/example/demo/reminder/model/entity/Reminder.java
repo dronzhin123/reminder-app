@@ -20,9 +20,16 @@ public class Reminder {
 
     private String description;
 
-    private LocalDateTime reminderDateTime;
+    private LocalDateTime remindAt;
+
+    private LocalDateTime createdAt;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     private User user;
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+    }
 
 }

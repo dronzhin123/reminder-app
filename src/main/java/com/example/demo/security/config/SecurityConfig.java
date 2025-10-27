@@ -1,6 +1,6 @@
 package com.example.demo.security.config;
 
-import com.example.demo.jwt.convert.JwtConverter;
+import com.example.demo.jwt.converter.JwtConverter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

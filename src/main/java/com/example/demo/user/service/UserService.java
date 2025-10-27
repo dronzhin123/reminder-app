@@ -10,6 +10,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -20,10 +21,16 @@ public class UserService {
     private final AuthenticationManager authenticationManager;
     private final PasswordEncoder passwordEncoder;
 
+    @Transactional
+    public UserReadDto createUser(UserCreateDto dto) {
+        validatePasswordsMatch(dto.password(), dto.repeatPassword());
+        validateUserNotExists(dto.username(), dto.email(), dto.telegram());
+        User user = userMapper.toUser(dto, passwordEncoder.encode(dto.password()));
+        return userMapper.toDto(userRepository.save(user));
+    }
+
     public User getUser(UserLoginDto dto) {
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(dto.username(), dto.password())
-        );
+        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(dto.username(), dto.password()));
         return userRepository.findByUsername(dto.username())
                 .orElseThrow(() -> new RuntimeException("User not found with username: " + dto.username()));
     }
@@ -34,23 +41,23 @@ public class UserService {
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
     }
 
-    public UserReadDto saveUser(UserCreateDto dto) {
-        validatePasswordsMatch(dto.password(), dto.repeatPassword());
-        validateUserNotExists(dto.username(), dto.email(), dto.telegram());
-        User user = userMapper.toUser(dto, passwordEncoder.encode(dto.password()));
-        return userMapper.toDto(userRepository.save(user));
-    }
-
+    @Transactional
     public UserReadDto updateUser(User user, UserUpdateDto dto) {
         validateUserNotExists(user.getId(), dto.username(), dto.email(), dto.telegram());
         userMapper.update(user, dto);
         return userMapper.toDto(userRepository.save(user));
     }
 
+    @Transactional
     public void updatePassword(User user, PasswordUpdateDto dto) {
         validatePasswordsMatch(dto.password(), dto.repeatPassword());
         user.setPassword(passwordEncoder.encode(dto.password()));
         userRepository.save(user);
+    }
+
+    @Transactional
+    public void deleteUser(User user) {
+        userRepository.delete(user);
     }
 
     private void validatePasswordsMatch(String password, String repeatPassword) {

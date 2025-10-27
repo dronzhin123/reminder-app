@@ -1,4 +1,4 @@
-package com.example.demo.jwt.convert;
+package com.example.demo.jwt.converter;
 
 
 import org.springframework.core.convert.converter.Converter;

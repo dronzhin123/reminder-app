@@ -26,7 +26,7 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<ApiResponseWrapper<UserReadDto>> register(@RequestBody @Valid UserCreateDto dto) {
-        UserReadDto data = userService.saveUser(dto);
+        UserReadDto data = userService.createUser(dto);
         return ResponseEntity.ok(new ApiResponseWrapper<>("User registered successfully", data));
     }
 
