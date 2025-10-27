@@ -1,4 +1,4 @@
-package com.example.demo.reminder.repository;
+package com.example.demo.reminder.jpa.repository;
 
 import com.example.demo.reminder.model.entity.Reminder;
 import org.springframework.data.jpa.repository.JpaRepository;

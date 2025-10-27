@@ -1,4 +1,4 @@
-package com.example.demo.reminder.specification;
+package com.example.demo.reminder.jpa.specification;
 
 import com.example.demo.reminder.model.entity.Reminder;
 import org.springframework.data.jpa.domain.Specification;

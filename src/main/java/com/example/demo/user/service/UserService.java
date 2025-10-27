@@ -3,7 +3,7 @@ package com.example.demo.user.service;
 import com.example.demo.user.model.dto.*;
 import com.example.demo.user.model.entity.User;
 import com.example.demo.user.model.mapper.UserMapper;
-import com.example.demo.user.repository.UserRepository;
+import com.example.demo.user.jpa.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
