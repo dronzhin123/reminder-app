@@ -3,6 +3,10 @@ spring:
   application:
     name: reminder-app
 
+  liquibase:
+    change-log: classpath:db/changelog/master.yaml
+    enabled: true
+
   datasource:
     url: jdbc:postgresql://localhost:5432/postgres
     username: postgres
@@ -11,7 +15,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: none
     show-sql: true
     properties:
       hibernate:

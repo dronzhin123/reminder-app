@@ -10,8 +10,8 @@ public record UserCreateDto(
         String password,
         @ValidField(name = "RepeatPassword", nullable = false, allowSpaces = false, minSize = 8, maxSize = 50)
         String repeatPassword,
-        @ValidField(name = "Email", nullable = false, allowSpaces = false, maxSize = 50) @Email
+        @ValidField(name = "Email", allowSpaces = false, maxSize = 50) @Email
         String email,
-        @ValidField(name = "Telegram", nullable = false, allowSpaces = false, maxSize = 50)
+        @ValidField(name = "Telegram", allowSpaces = false, maxSize = 50)
         String telegram
         ) {}
