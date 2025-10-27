@@ -1,4 +1,4 @@
-package com.example.demo.jwt.config;
+package com.example.demo.security.jwt.config;
 
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;

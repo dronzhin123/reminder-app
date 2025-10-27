@@ -1,6 +1,6 @@
-package com.example.demo.jwt.service;
+package com.example.demo.security.jwt.service;
 
-import com.example.demo.jwt.dto.JwtTokenDto;
+import com.example.demo.security.jwt.dto.JwtTokenDto;
 import com.example.demo.user.model.entity.User;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;

@@ -1,7 +1,7 @@
 package com.example.demo.user.controller;
 
-import com.example.demo.jwt.dto.JwtTokenDto;
-import com.example.demo.jwt.service.JwtService;
+import com.example.demo.security.jwt.dto.JwtTokenDto;
+import com.example.demo.security.jwt.service.JwtService;
 import com.example.demo.user.model.dto.UserCreateDto;
 import com.example.demo.user.model.dto.UserLoginDto;
 import com.example.demo.user.model.dto.UserReadDto;

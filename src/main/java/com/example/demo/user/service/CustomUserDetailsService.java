@@ -1,4 +1,4 @@
-package com.example.demo.security.service;
+package com.example.demo.user.service;
 
 import com.example.demo.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
