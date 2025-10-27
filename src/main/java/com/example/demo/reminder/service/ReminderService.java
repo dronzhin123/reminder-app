@@ -1,13 +1,13 @@
 package com.example.demo.reminder.service;
 
+import com.example.demo.reminder.jpa.repository.ReminderRepository;
+import com.example.demo.reminder.jpa.specification.ReminderSpecifications;
 import com.example.demo.reminder.model.dto.ReminderCreateDto;
 import com.example.demo.reminder.model.dto.ReminderFilterDto;
 import com.example.demo.reminder.model.dto.ReminderReadDto;
 import com.example.demo.reminder.model.dto.ReminderUpdateDto;
 import com.example.demo.reminder.model.entity.Reminder;
 import com.example.demo.reminder.model.mapper.ReminderMapper;
-import com.example.demo.reminder.jpa.repository.ReminderRepository;
-import com.example.demo.reminder.jpa.specification.ReminderSpecifications;
 import com.example.demo.user.model.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
