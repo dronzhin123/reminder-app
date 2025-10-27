@@ -35,7 +35,7 @@ public class User implements UserDetails {
 
     @PrePersist
     protected void onCreate() {
-        createdAt = LocalDateTime.now();
+        createdAt = LocalDateTime.now().withNano(0);
     }
 
     @Override

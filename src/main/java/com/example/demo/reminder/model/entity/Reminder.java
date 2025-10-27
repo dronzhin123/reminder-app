@@ -29,7 +29,7 @@ public class Reminder {
 
     @PrePersist
     protected void onCreate() {
-        createdAt = LocalDateTime.now();
+        createdAt = LocalDateTime.now().withNano(0);
     }
 
 }
