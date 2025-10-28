@@ -1,5 +1,6 @@
 package com.example.demo.reminder.model.dto;
 
+import com.example.demo.reminder.model.entity.Reminder;
 import com.example.demo.validation.annotation.ValidField;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotNull;
@@ -13,4 +14,6 @@ public record ReminderCreateDto(
         String description,
         @NotNull(message = "Reminder date/time must not be null")
         @Future(message = "Reminder date/time must be in the future")
-        LocalDateTime remindAt) {}
+        LocalDateTime remindAt,
+        @NotNull(message = "Sender must not be null")
+        Reminder.Sender sender) {}

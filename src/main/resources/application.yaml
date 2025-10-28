@@ -3,10 +3,6 @@ spring:
   application:
     name: reminder-app
 
-  liquibase:
-    change-log: classpath:db/changelog/master.yaml
-    enabled: true
-
   datasource:
     url: jdbc:postgresql://localhost:5432/postgres
     username: postgres
@@ -20,6 +16,19 @@ spring:
     properties:
       hibernate:
         format_sql: true
+
+  liquibase:
+    change-log: classpath:db/changelog/master.yaml
+    enabled: true
+
+  quartz:
+    job-store-type: jdbc
+    jdbc:
+      initialize-schema: never
+    properties:
+      org.quartz.jobStore.driverDelegateClass: org.quartz.impl.jdbcjobstore.PostgreSQLDelegate
+      org.quartz.jobStore.isClustered: true
+      org.quartz.scheduler.instanceId: AUTO
 
 server:
   port: 8080

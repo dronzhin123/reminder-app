@@ -1,0 +1,6 @@
+databaseChangeLog:
+  - changeSet:
+      id: 003-create-quartz-tables
+      author: dronzhin123
+      sqlFile:
+        path: classpath:org/quartz/impl/jdbcjobstore/tables_postgres.sql

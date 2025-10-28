@@ -7,9 +7,11 @@ import com.example.demo.reminder.model.dto.ReminderFilterDto;
 import com.example.demo.reminder.model.dto.ReminderReadDto;
 import com.example.demo.reminder.model.dto.ReminderUpdateDto;
 import com.example.demo.reminder.model.entity.Reminder;
+import com.example.demo.reminder.event.dto.ReminderEventDto;
 import com.example.demo.reminder.model.mapper.ReminderMapper;
 import com.example.demo.user.model.entity.User;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -23,14 +25,24 @@ public class ReminderService {
 
     private final ReminderRepository reminderRepository;
     private final ReminderMapper reminderMapper;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
-    public ReminderReadDto saveReminder(ReminderCreateDto dto, User user) {;
+    public ReminderReadDto createReminder(ReminderCreateDto dto, User user) {
+        String contact = switch (dto.sender()) {
+            case EMAIL -> user.getEmail();
+            case TELEGRAM -> user.getTelegram();
+        };
+        if (contact == null) {
+            throw new RuntimeException("User has no %s for sending reminder".formatted(dto.sender()));
+        }
         if (dto.title() != null && reminderRepository.existsByTitleAndUserId(dto.title(), user.getId())) {
-            throw new RuntimeException("Reminder with title '" + dto.title() + "' already exists for this user");
+            throw new RuntimeException("Reminder with title '%s' already exists for this user".formatted(dto.title()));
         }
         Reminder reminder = reminderMapper.toReminder(dto, user);
-        return reminderMapper.toDto(reminderRepository.save(reminder));
+        reminder = reminderRepository.save(reminder);
+        eventPublisher.publishEvent(new ReminderEventDto(reminder, ReminderEventDto.Type.CREATED));
+        return reminderMapper.toDto(reminder);
     }
 
     public ReminderReadDto getReminder(Long reminderId, User user) {
@@ -38,51 +50,46 @@ public class ReminderService {
         return reminderMapper.toDto(reminder);
     }
 
-    public Page<ReminderReadDto> getReminders(User user, ReminderFilterDto dto) {
-        Specification<Reminder> specification = ReminderSpecifications.byUser(user.getId());
-        if (dto.getKeyword() != null && !dto.getKeyword().isEmpty()) {
-            specification = specification.and(ReminderSpecifications.hasKeyword(dto.getKeyword()));
-        }
-        if (dto.getCreatedAtStart() != null) {
-            specification = specification.and(ReminderSpecifications.createdAtAfter(dto.getCreatedAtStart()));
-        }
-        if (dto.getCreatedAtEnd() != null) {
-            specification = specification.and(ReminderSpecifications.createdAtBefore(dto.getCreatedAtEnd()));
-        }
-        if (dto.getRemindAtStart() != null) {
-            specification = specification.and(ReminderSpecifications.remindAtAfter(dto.getRemindAtStart()));
-        }
-        if (dto.getRemindAtEnd() != null) {
-            specification = specification.and(ReminderSpecifications.remindAtBefore(dto.getRemindAtEnd()));
-        }
-        PageRequest pageRequest = createPageRequest(dto.getPage(), dto.getSize(), dto.getSortBy(), dto.getDirection());
+    public Page<ReminderReadDto> getReminders(ReminderFilterDto dto, User user) {
+        Specification<Reminder> specification = ReminderSpecifications.getSpecification(dto, user);
+        Sort sort = Sort.by(dto.getDirection(), dto.getSortField().value);
+        PageRequest pageRequest = PageRequest.of(dto.getPage(), dto.getSize(), sort);
         return reminderRepository.findAll(specification, pageRequest).map(reminderMapper::toDto);
     }
 
     @Transactional
     public ReminderReadDto updateReminder(Long reminderId, ReminderUpdateDto dto, User user) {
         if (dto.title() != null && reminderRepository.existsByTitleAndUserIdAndIdNot(dto.title(), user.getId(), reminderId)) {
-            throw new RuntimeException("Reminder with title '" + dto.title() + "' already exists for this user");
+            throw new RuntimeException("Reminder with title '%s' already exists for this user".formatted(dto.title()));
         }
         Reminder reminder = findByIdAndUserId(reminderId, user.getId());
         reminderMapper.update(reminder, dto);
-        return reminderMapper.toDto(reminderRepository.save(reminder));
+        reminder = reminderRepository.save(reminder);
+        eventPublisher.publishEvent(new ReminderEventDto(reminder, ReminderEventDto.Type.UPDATED));
+        return reminderMapper.toDto(reminder);
     }
 
     @Transactional
     public void deleteReminder(Long reminderId, User user) {
         Reminder reminder = findByIdAndUserId(reminderId, user.getId());
+        eventPublisher.publishEvent(new ReminderEventDto(reminder, ReminderEventDto.Type.DELETED));
         reminderRepository.delete(reminder);
+    }
+
+    public Reminder findWithUserById(Long reminderId) {
+        return reminderRepository.findWithUserById(reminderId)
+                .orElseThrow(() -> new RuntimeException("Reminder not found with id %d".formatted(reminderId)));
+    }
+
+    @Transactional
+    public void updateStatus(Reminder reminder, Reminder.Status status) {
+        reminder.setStatus(status);
+        reminderRepository.save(reminder);
     }
 
     private Reminder findByIdAndUserId(Long reminderId, Long userId) {
         return reminderRepository.findByIdAndUserId(reminderId, userId)
-                .orElseThrow(() -> new RuntimeException("Reminder not found with id " + reminderId + " for this user"));
-    }
-
-    private PageRequest createPageRequest(int page, int size, String sortBy, String direction) {
-        Sort sort = direction.equals("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
-        return PageRequest.of(page, size, sort);
+                .orElseThrow(() -> new RuntimeException("Reminder not found with id %d for this user".formatted(reminderId)));
     }
 
 }

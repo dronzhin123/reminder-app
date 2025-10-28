@@ -1,6 +1,7 @@
 package com.example.demo.reminder.jpa.repository;
 
 import com.example.demo.reminder.model.entity.Reminder;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
@@ -13,5 +14,8 @@ public interface ReminderRepository extends JpaRepository<Reminder, Long>, JpaSp
     boolean existsByTitleAndUserIdAndIdNot(String title, Long userId, Long reminderId);
 
     Optional<Reminder> findByIdAndUserId(Long id, Long userId);
+
+    @EntityGraph(attributePaths = "user")
+    Optional<Reminder> findWithUserById(Long id);
 
 }

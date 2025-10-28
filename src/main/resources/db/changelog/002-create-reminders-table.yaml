@@ -38,6 +38,18 @@ databaseChangeLog:
                     nullable: false
 
               - column:
+                  name: sender
+                  type: VARCHAR(20)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: status
+                  type: VARCHAR(20)
+                  constraints:
+                    nullable: false
+
+              - column:
                   name: user_id
                   type: BIGINT
                   constraints:

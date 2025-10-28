@@ -1,9 +1,12 @@
 package com.example.demo.reminder.model.dto;
 
+import com.example.demo.reminder.model.entity.Reminder;
+import com.example.demo.reminder.model.enums.ReminderSortField;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.data.domain.Sort;
 
 import java.time.LocalDateTime;
 
@@ -17,10 +20,10 @@ public class ReminderFilterDto {
     private int size = 10;
 
     @Builder.Default
-    private String sortBy = "createdAt";
+    private ReminderSortField sortField = ReminderSortField.CREATED_AT;
 
     @Builder.Default
-    private String direction = "desc";
+    private Sort.Direction direction = Sort.Direction.DESC;
 
     private String keyword;
 
@@ -31,5 +34,9 @@ public class ReminderFilterDto {
     private LocalDateTime remindAtStart;
 
     private LocalDateTime remindAtEnd;
+
+    private Reminder.Sender sender;
+
+    private Reminder.Status status;
 
 }

@@ -5,6 +5,7 @@ import com.example.demo.user.model.dto.*;
 import com.example.demo.user.model.entity.User;
 import com.example.demo.user.model.mapper.UserMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -12,6 +13,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserService {
@@ -26,6 +28,8 @@ public class UserService {
         validatePasswordsMatch(dto.password(), dto.repeatPassword());
         validateUserNotExists(dto.username(), dto.email(), dto.telegram());
         User user = userMapper.toUser(dto, passwordEncoder.encode(dto.password()));
+        log.info("{}", user.getRole());
+        log.info("{}", user.getPassword());
         return userMapper.toDto(userRepository.save(user));
     }
 

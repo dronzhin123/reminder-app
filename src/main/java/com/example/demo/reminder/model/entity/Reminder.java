@@ -24,12 +24,29 @@ public class Reminder {
 
     private LocalDateTime createdAt;
 
+    @Enumerated(EnumType.STRING)
+    private Sender sender;
+
+    @Enumerated(EnumType.STRING) @Builder.Default
+    private Status status = Status.WAITING;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     private User user;
 
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now().withNano(0);
+    }
+
+    public enum Sender {
+        EMAIL,
+        TELEGRAM
+    }
+
+    public enum Status {
+        WAITING,
+        SENT,
+        ERROR
     }
 
 }

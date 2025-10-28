@@ -30,7 +30,7 @@ public class ReminderController {
             Authentication authentication) {
 
         User user = userService.getUser(authentication);
-        ReminderReadDto data = reminderService.saveReminder(dto, user);
+        ReminderReadDto data = reminderService.createReminder(dto, user);
         return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponseWrapper<>("Reminder created successfully", data));
     }
 
@@ -50,7 +50,7 @@ public class ReminderController {
             Authentication authentication) {
 
         User user = userService.getUser(authentication);
-        Page<ReminderReadDto> data =  reminderService.getReminders(user, dto);
+        Page<ReminderReadDto> data =  reminderService.getReminders(dto, user);
         return ResponseEntity.ok(new ApiResponseWrapper<>("Reminders retrieved successfully", data));
     }
 
