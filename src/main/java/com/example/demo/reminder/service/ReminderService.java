@@ -9,6 +9,7 @@ import com.example.demo.reminder.model.dto.ReminderUpdateDto;
 import com.example.demo.reminder.model.entity.Reminder;
 import com.example.demo.reminder.event.dto.ReminderEventDto;
 import com.example.demo.reminder.model.mapper.ReminderMapper;
+import com.example.demo.reminder.validator.ReminderValidator;
 import com.example.demo.user.model.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
@@ -25,17 +26,13 @@ public class ReminderService {
 
     private final ReminderRepository reminderRepository;
     private final ReminderMapper reminderMapper;
+    private final ReminderValidator reminderValidator;
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public ReminderReadDto createReminder(ReminderCreateDto dto, User user) {
-        String contact = switch (dto.sender()) {
-            case EMAIL -> user.getEmail();
-            case TELEGRAM -> user.getTelegram();
-        };
-        if (contact == null) {
-            throw new RuntimeException("User has no %s for sending reminder".formatted(dto.sender()));
-        }
+        reminderValidator.validateSender(dto, user);
+        reminderValidator.validateTitle(dto.title(), user.getId(), null);
         if (dto.title() != null && reminderRepository.existsByTitleAndUserId(dto.title(), user.getId())) {
             throw new RuntimeException("Reminder with title '%s' already exists for this user".formatted(dto.title()));
         }
@@ -51,7 +48,7 @@ public class ReminderService {
     }
 
     public Page<ReminderReadDto> getReminders(ReminderFilterDto dto, User user) {
-        Specification<Reminder> specification = ReminderSpecifications.getSpecification(dto, user);
+        Specification<Reminder> specification = ReminderSpecifications.getSpecification(dto, user.getId());
         Sort sort = Sort.by(dto.getDirection(), dto.getSortField().value);
         PageRequest pageRequest = PageRequest.of(dto.getPage(), dto.getSize(), sort);
         return reminderRepository.findAll(specification, pageRequest).map(reminderMapper::toDto);
@@ -59,9 +56,7 @@ public class ReminderService {
 
     @Transactional
     public ReminderReadDto updateReminder(Long reminderId, ReminderUpdateDto dto, User user) {
-        if (dto.title() != null && reminderRepository.existsByTitleAndUserIdAndIdNot(dto.title(), user.getId(), reminderId)) {
-            throw new RuntimeException("Reminder with title '%s' already exists for this user".formatted(dto.title()));
-        }
+        reminderValidator.validateTitle(dto.title(), user.getId(), reminderId);
         Reminder reminder = findByIdAndUserId(reminderId, user.getId());
         reminderMapper.update(reminder, dto);
         reminder = reminderRepository.save(reminder);

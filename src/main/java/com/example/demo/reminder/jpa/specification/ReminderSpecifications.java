@@ -13,10 +13,10 @@ public class ReminderSpecifications {
 
     private static final String FORMAT = "%%%s%%";
 
-    public static Specification<Reminder> getSpecification(ReminderFilterDto dto, User user) {
+    public static Specification<Reminder> getSpecification(ReminderFilterDto dto, Long userId) {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
-            predicates.add(cb.equal(root.get("user").get("id"), user.getId()));
+            predicates.add(cb.equal(root.get("user").get("id"), userId));
             if (dto.getCreatedAtStart() != null) {
                 predicates.add(cb.greaterThanOrEqualTo(root.get("createdAt"), dto.getCreatedAtStart()));
             }
