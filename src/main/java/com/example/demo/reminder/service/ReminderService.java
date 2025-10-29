@@ -28,13 +28,12 @@ public class ReminderService {
 
     private final ReminderRepository reminderRepository;
     private final ReminderMapper reminderMapper;
-    private final ReminderValidator reminderValidator;
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public ReminderReadDto createReminder(ReminderCreateDto dto, User user) {
-        reminderValidator.validateSender(dto, user);
-        reminderValidator.validateTitle(dto.title(), user.getId(), null);
+        validateSender(dto, user);
+        validateTitle(dto.title(), user.getId(), null);
         Reminder reminder = reminderMapper.toReminder(dto, user);
         reminder = reminderRepository.save(reminder);
         eventPublisher.publishEvent(new ReminderEventDto(reminder, ReminderEventDto.Type.CREATED));
@@ -47,7 +46,7 @@ public class ReminderService {
     }
 
     public Page<ReminderReadDto> getReminders(ReminderFilterDto dto, User user) {
-        Specification<Reminder> specification = ReminderSpecifications.getSpecification(dto, user.getId());
+        Specification<Reminder> specification = buildSpecification(dto, user.getId());
         Sort sort = Sort.by(dto.getDirection(), dto.getSortField().value);
         PageRequest pageRequest = PageRequest.of(dto.getPage(), dto.getSize(), sort);
         return reminderRepository.findAll(specification, pageRequest).map(reminderMapper::toDto);
@@ -55,7 +54,7 @@ public class ReminderService {
 
     @Transactional
     public ReminderReadDto updateReminder(Long reminderId, ReminderUpdateDto dto, User user) {
-        reminderValidator.validateTitle(dto.title(), user.getId(), reminderId);
+        validateTitle(dto.title(), user.getId(), reminderId);
         Reminder reminder = findByIdAndUserId(reminderId, user.getId());
         reminderMapper.update(reminder, dto);
         reminder = reminderRepository.save(reminder);
@@ -80,31 +79,53 @@ public class ReminderService {
         reminderRepository.save(reminder);
     }
 
+    private Specification<Reminder> buildSpecification(ReminderFilterDto dto, Long userId) {
+        Specification<Reminder> specification = ReminderSpecifications.hasUserId(userId);
+        if (dto.getCreatedAtStart() != null) {
+            specification = specification.and(ReminderSpecifications.createdAtAfter(dto.getCreatedAtStart()));
+        }
+        if (dto.getCreatedAtEnd() != null) {
+            specification = specification.and(ReminderSpecifications.createdAtBefore(dto.getCreatedAtEnd()));
+        }
+        if (dto.getRemindAtStart() != null) {
+            specification = specification.and(ReminderSpecifications.remindAtAfter(dto.getRemindAtStart()));
+        }
+        if (dto.getRemindAtEnd() != null) {
+            specification = specification.and(ReminderSpecifications.remindAtBefore(dto.getRemindAtEnd()));
+        }
+        if (dto.getStatus() != null) {
+            specification = specification.and(ReminderSpecifications.hasStatus(dto.getStatus().name()));
+        }
+        if (dto.getSender() != null) {
+            specification = specification.and(ReminderSpecifications.hasSender(dto.getSender().name()));
+        }
+        if (dto.getKeyword() != null && !dto.getKeyword().isBlank()) {
+            specification = specification.and(ReminderSpecifications.containsKeyword(dto.getKeyword()));
+        }
+        return specification;
+    }
+
     private Reminder findByIdAndUserId(Long reminderId, Long userId) {
         return reminderRepository.findByIdAndUserId(reminderId, userId).orElseThrow(() -> new ReminderNotFoundException(reminderId));
     }
 
-    private class ReminderValidator {
-
-        public void validateSender(ReminderCreateDto dto, User user) {
-            String contact = switch (dto.sender()) {
-                case EMAIL -> user.getEmail();
-                case TELEGRAM -> user.getTelegram();
-            };
-            if (contact == null) {
-                throw new NoContactForSenderException(dto.sender().name());
-            }
+    public void validateSender(ReminderCreateDto dto, User user) {
+        String contact = switch (dto.sender()) {
+            case EMAIL -> user.getEmail();
+            case TELEGRAM -> user.getTelegram();
+        };
+        if (contact == null) {
+            throw new NoContactForSenderException(dto.sender().name());
         }
+    }
 
-        public void validateTitle(String title, Long userId, Long excludeId) {
-            boolean exists = (excludeId == null) ?
-                    reminderRepository.existsByTitleAndUserId(title, userId) :
-                    reminderRepository.existsByTitleAndUserIdAndIdNot(title, userId, excludeId);
-            if (exists) {
-                throw new ReminderAlreadyExistsException("title", title);
-            }
+    public void validateTitle(String title, Long userId, Long excludeId) {
+        boolean exists = (excludeId == null) ?
+                reminderRepository.existsByTitleAndUserId(title, userId) :
+                reminderRepository.existsByTitleAndUserIdAndIdNot(title, userId, excludeId);
+        if (exists) {
+            throw new ReminderAlreadyExistsException("title", title);
         }
-
     }
 
 }

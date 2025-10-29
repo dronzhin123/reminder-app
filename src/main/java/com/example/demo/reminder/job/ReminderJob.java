@@ -21,12 +21,12 @@ public class ReminderJob implements Job {
     private final TelegramReminderSender telegramReminderSender;
     private final ReminderService reminderService;
 
-    private final Map<Reminder.Sender, BaseReminderSender> senderMap;
+    private final Map<Reminder.Sender, BaseReminderSender> senders;
 
     @PostConstruct
     private void init() {
-        senderMap.put(Reminder.Sender.EMAIL, emailReminderSender);
-        senderMap.put(Reminder.Sender.TELEGRAM, telegramReminderSender);
+        senders.put(Reminder.Sender.EMAIL, emailReminderSender);
+        senders.put(Reminder.Sender.TELEGRAM, telegramReminderSender);
     }
 
     @Override
@@ -35,7 +35,7 @@ public class ReminderJob implements Job {
         Reminder reminder = reminderService.findWithUserById(reminderId);
 
         try {
-            senderMap.get(reminder.getSender()).sendMassage(reminder);
+            senders.get(reminder.getSender()).sendMassage(reminder);
             reminderService.updateStatus(reminder, Reminder.Status.SENT);
         } catch (Exception e) {
             reminderService.updateStatus(reminder, Reminder.Status.ERROR);
