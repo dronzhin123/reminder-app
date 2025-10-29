@@ -1,5 +1,6 @@
 package com.example.demo.handler;
 
+import com.example.demo.exception.base.BaseException;
 import com.example.demo.wrapper.ApiResponseWrapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,17 +14,13 @@ import java.util.Objects;
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
-    private ResponseEntity<ApiResponseWrapper<Object>> buildResponse(HttpStatus status, String message) {
-        return ResponseEntity.status(status).body(new ApiResponseWrapper<>(message, null));
-    }
-
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ApiResponseWrapper<Object>> handleBadCredentials(BadCredentialsException exception) {
         return buildResponse(HttpStatus.UNAUTHORIZED, exception.getMessage());
     }
 
-    @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<ApiResponseWrapper<Object>> handleRuntimeException(RuntimeException exception) {
+    @ExceptionHandler(BaseException.class)
+    public ResponseEntity<ApiResponseWrapper<Object>> handleBaseException(BaseException exception) {
         return buildResponse(HttpStatus.BAD_REQUEST, exception.getMessage());
     }
 
@@ -39,6 +36,10 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponseWrapper<Object>> handleGenericException(Exception exception) {
         return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Internal server error");
+    }
+
+    private ResponseEntity<ApiResponseWrapper<Object>> buildResponse(HttpStatus status, String message) {
+        return ResponseEntity.status(status).body(new ApiResponseWrapper<>(message, null));
     }
 
 }

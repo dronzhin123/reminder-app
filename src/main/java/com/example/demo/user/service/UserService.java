@@ -1,10 +1,12 @@
 package com.example.demo.user.service;
 
+import com.example.demo.exception.user.PasswordsMismatchException;
+import com.example.demo.exception.user.UserAlreadyExistsException;
+import com.example.demo.exception.user.UserNotFoundException;
 import com.example.demo.user.jpa.repository.UserRepository;
 import com.example.demo.user.model.dto.*;
 import com.example.demo.user.model.entity.User;
 import com.example.demo.user.model.mapper.UserMapper;
-import com.example.demo.user.valiadtor.UserValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -28,26 +30,24 @@ public class UserService {
     @Transactional
     public UserReadDto createUser(UserCreateDto dto) {
         userValidator.validatePasswords(dto.password(), dto.repeatPassword());
-        userValidator.validateUser(dto.username(), dto.email(), dto.telegram());
+        userValidator.validateUserNotExists(dto.username(), dto.email(), dto.telegram());
         User user = userMapper.toUser(dto, passwordEncoder.encode(dto.password()));
         return userMapper.toDto(userRepository.save(user));
     }
 
     public User getUser(UserLoginDto dto) {
         authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(dto.username(), dto.password()));
-        return userRepository.findByUsername(dto.username())
-                .orElseThrow(() -> new RuntimeException("User not found with username: %s".formatted(dto.username())));
+        return userRepository.findByUsername(dto.username()).orElseThrow(() -> new UserNotFoundException(dto.username()));
     }
 
     public User getUser(Authentication authentication) {
         Long userId = Long.parseLong(authentication.getName());
-        return userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found with id: %d".formatted(userId)));
+        return userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException(userId));
     }
 
     @Transactional
     public UserReadDto updateUser(User user, UserUpdateDto dto) {
-        userValidator.validateUser(user.getId(), dto.username(), dto.email(), dto.telegram());
+        userValidator.validateUserNotExists(user.getId(), dto.username(), dto.email(), dto.telegram());
         userMapper.update(user, dto);
         return userMapper.toDto(userRepository.save(user));
     }
@@ -63,5 +63,40 @@ public class UserService {
     public void deleteUser(User user) {
         userRepository.delete(user);
     }
+
+    private class UserValidator {
+
+        public void validatePasswords(String password, String repeatPassword) {
+            if (!password.equals(repeatPassword)) {
+                throw new PasswordsMismatchException();
+            }
+        }
+
+        public void validateUserNotExists(String username, String email, String telegram) {
+            if (username != null && userRepository.existsByUsername(username)) {
+                throw new UserAlreadyExistsException("username", username);
+            }
+            if (email != null && userRepository.existsByEmail(email)) {
+                throw new UserAlreadyExistsException("email", email);
+            }
+            if (telegram != null && userRepository.existsByTelegram(telegram)) {
+                throw new UserAlreadyExistsException("telegram", telegram);
+            }
+        }
+
+        public void validateUserNotExists(Long userId, String username, String email, String telegram) {
+            if (username != null && userRepository.existsByUsernameAndIdNot(username, userId)) {
+                throw new UserAlreadyExistsException("username", username);
+            }
+            if (email != null && userRepository.existsByEmailAndIdNot(email, userId)) {
+                throw new UserAlreadyExistsException("email", email);
+            }
+            if (telegram != null && userRepository.existsByTelegramAndIdNot(telegram, userId)) {
+                throw new UserAlreadyExistsException("telegram", telegram);
+            }
+        }
+
+    }
+
 
 }

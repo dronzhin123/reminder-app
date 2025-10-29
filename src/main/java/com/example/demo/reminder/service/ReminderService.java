@@ -1,5 +1,9 @@
 package com.example.demo.reminder.service;
 
+import com.example.demo.reminder.event.dto.ReminderEventDto;
+import com.example.demo.exception.reminder.NoContactForSenderException;
+import com.example.demo.exception.reminder.ReminderAlreadyExistsException;
+import com.example.demo.exception.reminder.ReminderNotFoundException;
 import com.example.demo.reminder.jpa.repository.ReminderRepository;
 import com.example.demo.reminder.jpa.specification.ReminderSpecifications;
 import com.example.demo.reminder.model.dto.ReminderCreateDto;
@@ -7,9 +11,7 @@ import com.example.demo.reminder.model.dto.ReminderFilterDto;
 import com.example.demo.reminder.model.dto.ReminderReadDto;
 import com.example.demo.reminder.model.dto.ReminderUpdateDto;
 import com.example.demo.reminder.model.entity.Reminder;
-import com.example.demo.reminder.event.dto.ReminderEventDto;
 import com.example.demo.reminder.model.mapper.ReminderMapper;
-import com.example.demo.reminder.validator.ReminderValidator;
 import com.example.demo.user.model.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
@@ -33,9 +35,6 @@ public class ReminderService {
     public ReminderReadDto createReminder(ReminderCreateDto dto, User user) {
         reminderValidator.validateSender(dto, user);
         reminderValidator.validateTitle(dto.title(), user.getId(), null);
-        if (dto.title() != null && reminderRepository.existsByTitleAndUserId(dto.title(), user.getId())) {
-            throw new RuntimeException("Reminder with title '%s' already exists for this user".formatted(dto.title()));
-        }
         Reminder reminder = reminderMapper.toReminder(dto, user);
         reminder = reminderRepository.save(reminder);
         eventPublisher.publishEvent(new ReminderEventDto(reminder, ReminderEventDto.Type.CREATED));
@@ -72,8 +71,7 @@ public class ReminderService {
     }
 
     public Reminder findWithUserById(Long reminderId) {
-        return reminderRepository.findWithUserById(reminderId)
-                .orElseThrow(() -> new RuntimeException("Reminder not found with id %d".formatted(reminderId)));
+        return reminderRepository.findWithUserById(reminderId).orElseThrow(() -> new ReminderNotFoundException(reminderId));
     }
 
     @Transactional
@@ -83,8 +81,30 @@ public class ReminderService {
     }
 
     private Reminder findByIdAndUserId(Long reminderId, Long userId) {
-        return reminderRepository.findByIdAndUserId(reminderId, userId)
-                .orElseThrow(() -> new RuntimeException("Reminder not found with id %d for this user".formatted(reminderId)));
+        return reminderRepository.findByIdAndUserId(reminderId, userId).orElseThrow(() -> new ReminderNotFoundException(reminderId));
+    }
+
+    private class ReminderValidator {
+
+        public void validateSender(ReminderCreateDto dto, User user) {
+            String contact = switch (dto.sender()) {
+                case EMAIL -> user.getEmail();
+                case TELEGRAM -> user.getTelegram();
+            };
+            if (contact == null) {
+                throw new NoContactForSenderException(dto.sender().name());
+            }
+        }
+
+        public void validateTitle(String title, Long userId, Long excludeId) {
+            boolean exists = (excludeId == null) ?
+                    reminderRepository.existsByTitleAndUserId(title, userId) :
+                    reminderRepository.existsByTitleAndUserIdAndIdNot(title, userId, excludeId);
+            if (exists) {
+                throw new ReminderAlreadyExistsException("title", title);
+            }
+        }
+
     }
 
 }
