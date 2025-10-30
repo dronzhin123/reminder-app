@@ -7,7 +7,7 @@ import com.example.demo.user.model.dto.UserLoginDto;
 import com.example.demo.user.model.dto.UserReadDto;
 import com.example.demo.user.model.entity.User;
 import com.example.demo.user.service.UserService;
-import com.example.demo.wrapper.ApiResponseWrapper;
+import com.example.demo.common.wrapper.ApiResponseWrapper;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

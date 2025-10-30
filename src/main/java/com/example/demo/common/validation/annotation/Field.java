@@ -1,6 +1,6 @@
-package com.example.demo.validation.annotation;
+package com.example.demo.common.validation.annotation;
 
-import com.example.demo.validation.validator.FieldValidator;
+import com.example.demo.common.validation.validator.FieldValidator;
 import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
 
@@ -10,7 +10,7 @@ import java.lang.annotation.*;
 @Constraint(validatedBy = FieldValidator.class)
 @Target({ ElementType.FIELD, ElementType.PARAMETER })
 @Retention(RetentionPolicy.RUNTIME)
-public @interface ValidField {
+public @interface Field {
 
     String message() default "Invalid field value";
 

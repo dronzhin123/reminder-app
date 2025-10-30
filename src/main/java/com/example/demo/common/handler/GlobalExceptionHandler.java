@@ -1,7 +1,7 @@
-package com.example.demo.handler;
+package com.example.demo.common.handler;
 
-import com.example.demo.exception.base.BaseException;
-import com.example.demo.wrapper.ApiResponseWrapper;
+import com.example.demo.common.exception.CommonException;
+import com.example.demo.common.wrapper.ApiResponseWrapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -19,8 +19,8 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.UNAUTHORIZED, exception.getMessage());
     }
 
-    @ExceptionHandler(BaseException.class)
-    public ResponseEntity<ApiResponseWrapper<Object>> handleBaseException(BaseException exception) {
+    @ExceptionHandler(CommonException.class)
+    public ResponseEntity<ApiResponseWrapper<Object>> handleCommonException(CommonException exception) {
         return buildResponse(HttpStatus.BAD_REQUEST, exception.getMessage());
     }
 

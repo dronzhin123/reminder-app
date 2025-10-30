@@ -1,8 +1,8 @@
-package com.example.demo.exception.reminder;
+package com.example.demo.reminder.exception;
 
-import com.example.demo.exception.base.BaseException;
+import com.example.demo.common.exception.CommonException;
 
-public class ReminderAlreadyExistsException extends BaseException {
+public class ReminderAlreadyExistsException extends CommonException {
 
     public ReminderAlreadyExistsException(String fieldName, String value) {
         super("A reminder with this %s already exists: %s".formatted(fieldName, value));

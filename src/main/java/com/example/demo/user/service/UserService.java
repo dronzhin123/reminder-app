@@ -1,20 +1,23 @@
 package com.example.demo.user.service;
 
-import com.example.demo.exception.user.PasswordsMismatchException;
-import com.example.demo.exception.user.UserAlreadyExistsException;
-import com.example.demo.exception.user.UserNotFoundException;
-import com.example.demo.user.jpa.repository.UserRepository;
+import com.example.demo.user.exception.UserAlreadyExistsException;
+import com.example.demo.user.exception.UserNotFoundException;
+import com.example.demo.user.repository.UserRepository;
 import com.example.demo.user.model.dto.*;
 import com.example.demo.user.model.entity.User;
 import com.example.demo.user.model.mapper.UserMapper;
+import com.example.demo.user.specification.UserSpecification;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Objects;
 
 @Slf4j
 @Service
@@ -25,14 +28,6 @@ public class UserService {
     private final UserMapper userMapper;
     private final AuthenticationManager authenticationManager;
     private final PasswordEncoder passwordEncoder;
-
-    @Transactional
-    public UserReadDto createUser(UserCreateDto dto) {
-        validatePasswords(dto.password(), dto.repeatPassword());
-        validateUserNotExists(dto.username(), dto.email(), dto.telegram());
-        User user = userMapper.toUser(dto, passwordEncoder.encode(dto.password()));
-        return userMapper.toDto(userRepository.save(user));
-    }
 
     public User getUser(UserLoginDto dto) {
         authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(dto.username(), dto.password()));
@@ -45,15 +40,21 @@ public class UserService {
     }
 
     @Transactional
+    public UserReadDto createUser(UserCreateDto dto) {
+        validateUserNotExists(dto.username(), dto.email(), dto.telegram(), null);
+        User user = userMapper.toUser(dto, passwordEncoder.encode(dto.password()));
+        return userMapper.toDto(userRepository.save(user));
+    }
+
+    @Transactional
     public UserReadDto updateUser(User user, UserUpdateDto dto) {
-        validateUserNotExists(user.getId(), dto.username(), dto.email(), dto.telegram());
+        validateUserNotExists(dto.username(), dto.email(), dto.telegram(), user.getId());
         userMapper.update(user, dto);
         return userMapper.toDto(userRepository.save(user));
     }
 
     @Transactional
     public void updatePassword(User user, PasswordUpdateDto dto) {
-        validatePasswords(dto.password(), dto.repeatPassword());
         user.setPassword(passwordEncoder.encode(dto.password()));
         userRepository.save(user);
     }
@@ -63,32 +64,17 @@ public class UserService {
         userRepository.delete(user);
     }
 
-    public void validatePasswords(String password, String repeatPassword) {
-        if (!password.equals(repeatPassword)) {
-            throw new PasswordsMismatchException();
-        }
-    }
-
-    public void validateUserNotExists(String username, String email, String telegram) {
-        if (username != null && userRepository.existsByUsername(username)) {
+    private void validateUserNotExists(String username, String email, String telegram, Long userId) {
+        Specification<User> specification = UserSpecification.withUsernameOrEmailOrTelegram(username, email, telegram, userId);
+        User user = userRepository.findOne(specification).orElse(null);
+        if (user == null) return;
+        if (Objects.equals(user.getUsername(), username)) {
             throw new UserAlreadyExistsException("username", username);
         }
-        if (email != null && userRepository.existsByEmail(email)) {
+        if (Objects.equals(user.getEmail(), email)) {
             throw new UserAlreadyExistsException("email", email);
         }
-        if (telegram != null && userRepository.existsByTelegram(telegram)) {
-            throw new UserAlreadyExistsException("telegram", telegram);
-        }
-    }
-
-    public void validateUserNotExists(Long userId, String username, String email, String telegram) {
-        if (username != null && userRepository.existsByUsernameAndIdNot(username, userId)) {
-            throw new UserAlreadyExistsException("username", username);
-        }
-        if (email != null && userRepository.existsByEmailAndIdNot(email, userId)) {
-            throw new UserAlreadyExistsException("email", email);
-        }
-        if (telegram != null && userRepository.existsByTelegramAndIdNot(telegram, userId)) {
+        if (Objects.equals(user.getTelegram(), telegram)) {
             throw new UserAlreadyExistsException("telegram", telegram);
         }
     }

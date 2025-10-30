@@ -1,8 +1,8 @@
-package com.example.demo.exception.user;
+package com.example.demo.user.exception;
 
-import com.example.demo.exception.base.BaseException;
+import com.example.demo.common.exception.CommonException;
 
-public class UserNotFoundException extends BaseException {
+public class UserNotFoundException extends CommonException {
 
     public UserNotFoundException(Long userId) {
         super(String.format("User not found with id: %d", userId));

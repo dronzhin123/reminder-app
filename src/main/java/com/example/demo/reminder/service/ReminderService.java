@@ -1,11 +1,11 @@
 package com.example.demo.reminder.service;
 
 import com.example.demo.reminder.event.dto.ReminderEventDto;
-import com.example.demo.exception.reminder.NoContactForSenderException;
-import com.example.demo.exception.reminder.ReminderAlreadyExistsException;
-import com.example.demo.exception.reminder.ReminderNotFoundException;
-import com.example.demo.reminder.jpa.repository.ReminderRepository;
-import com.example.demo.reminder.jpa.specification.ReminderSpecifications;
+import com.example.demo.reminder.exception.NoContactForSenderException;
+import com.example.demo.reminder.exception.ReminderAlreadyExistsException;
+import com.example.demo.reminder.exception.ReminderNotFoundException;
+import com.example.demo.reminder.repository.ReminderRepository;
+import com.example.demo.reminder.specification.ReminderSpecification;
 import com.example.demo.reminder.model.dto.ReminderCreateDto;
 import com.example.demo.reminder.model.dto.ReminderFilterDto;
 import com.example.demo.reminder.model.dto.ReminderReadDto;
@@ -30,6 +30,17 @@ public class ReminderService {
     private final ReminderMapper reminderMapper;
     private final ApplicationEventPublisher eventPublisher;
 
+    public ReminderReadDto getReminder(Long reminderId, User user) {
+        Reminder reminder = findByIdAndUserId(reminderId, user.getId());
+        return reminderMapper.toDto(reminder);
+    }
+
+    public Page<ReminderReadDto> getReminders(ReminderFilterDto dto, User user) {
+        Specification<Reminder> specification = ReminderSpecification.withFilter(dto, user.getId());
+        PageRequest pageRequest = PageRequest.of(dto.getPage(), dto.getSize(), Sort.by(dto.getDirection(), dto.getSortField().value));
+        return reminderRepository.findAll(specification, pageRequest).map(reminderMapper::toDto);
+    }
+
     @Transactional
     public ReminderReadDto createReminder(ReminderCreateDto dto, User user) {
         validateSender(dto, user);
@@ -38,18 +49,6 @@ public class ReminderService {
         reminder = reminderRepository.save(reminder);
         eventPublisher.publishEvent(new ReminderEventDto(reminder, ReminderEventDto.Type.CREATED));
         return reminderMapper.toDto(reminder);
-    }
-
-    public ReminderReadDto getReminder(Long reminderId, User user) {
-        Reminder reminder = findByIdAndUserId(reminderId, user.getId());
-        return reminderMapper.toDto(reminder);
-    }
-
-    public Page<ReminderReadDto> getReminders(ReminderFilterDto dto, User user) {
-        Specification<Reminder> specification = buildSpecification(dto, user.getId());
-        Sort sort = Sort.by(dto.getDirection(), dto.getSortField().value);
-        PageRequest pageRequest = PageRequest.of(dto.getPage(), dto.getSize(), sort);
-        return reminderRepository.findAll(specification, pageRequest).map(reminderMapper::toDto);
     }
 
     @Transactional
@@ -69,47 +68,21 @@ public class ReminderService {
         reminderRepository.delete(reminder);
     }
 
-    public Reminder findWithUserById(Long reminderId) {
-        return reminderRepository.findWithUserById(reminderId).orElseThrow(() -> new ReminderNotFoundException(reminderId));
-    }
-
     @Transactional
     public void updateStatus(Reminder reminder, Reminder.Status status) {
         reminder.setStatus(status);
         reminderRepository.save(reminder);
     }
 
-    private Specification<Reminder> buildSpecification(ReminderFilterDto dto, Long userId) {
-        Specification<Reminder> specification = ReminderSpecifications.hasUserId(userId);
-        if (dto.getCreatedAtStart() != null) {
-            specification = specification.and(ReminderSpecifications.createdAtAfter(dto.getCreatedAtStart()));
-        }
-        if (dto.getCreatedAtEnd() != null) {
-            specification = specification.and(ReminderSpecifications.createdAtBefore(dto.getCreatedAtEnd()));
-        }
-        if (dto.getRemindAtStart() != null) {
-            specification = specification.and(ReminderSpecifications.remindAtAfter(dto.getRemindAtStart()));
-        }
-        if (dto.getRemindAtEnd() != null) {
-            specification = specification.and(ReminderSpecifications.remindAtBefore(dto.getRemindAtEnd()));
-        }
-        if (dto.getStatus() != null) {
-            specification = specification.and(ReminderSpecifications.hasStatus(dto.getStatus().name()));
-        }
-        if (dto.getSender() != null) {
-            specification = specification.and(ReminderSpecifications.hasSender(dto.getSender().name()));
-        }
-        if (dto.getKeyword() != null && !dto.getKeyword().isBlank()) {
-            specification = specification.and(ReminderSpecifications.containsKeyword(dto.getKeyword()));
-        }
-        return specification;
+    public Reminder findWithUserById(Long reminderId) {
+        return reminderRepository.findWithUserById(reminderId).orElseThrow(() -> new ReminderNotFoundException(reminderId));
     }
 
     private Reminder findByIdAndUserId(Long reminderId, Long userId) {
         return reminderRepository.findByIdAndUserId(reminderId, userId).orElseThrow(() -> new ReminderNotFoundException(reminderId));
     }
 
-    public void validateSender(ReminderCreateDto dto, User user) {
+    private void validateSender(ReminderCreateDto dto, User user) {
         String contact = switch (dto.sender()) {
             case EMAIL -> user.getEmail();
             case TELEGRAM -> user.getTelegram();
@@ -119,11 +92,9 @@ public class ReminderService {
         }
     }
 
-    public void validateTitle(String title, Long userId, Long excludeId) {
-        boolean exists = (excludeId == null) ?
-                reminderRepository.existsByTitleAndUserId(title, userId) :
-                reminderRepository.existsByTitleAndUserIdAndIdNot(title, userId, excludeId);
-        if (exists) {
+    private void validateTitle(String title, Long userId, Long reminderId) {
+        Specification<Reminder> specification = ReminderSpecification.withTitle(title, userId, reminderId);
+        if (reminderRepository.count(specification) > 0) {
             throw new ReminderAlreadyExistsException("title", title);
         }
     }

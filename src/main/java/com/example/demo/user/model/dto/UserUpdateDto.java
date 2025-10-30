@@ -1,12 +1,12 @@
 package com.example.demo.user.model.dto;
 
-import com.example.demo.validation.annotation.ValidField;
+import com.example.demo.common.validation.annotation.Field;
 import jakarta.validation.constraints.Email;
 
 public record UserUpdateDto(
-        @ValidField(name = "Username", nullable = false, allowSpaces = false, maxSize = 50)
+        @Field(name = "Username", nullable = false, allowSpaces = false, maxSize = 50)
         String username,
-        @ValidField(name = "Email", allowSpaces = false, maxSize = 50) @Email
+        @Field(name = "Email", allowSpaces = false, maxSize = 50) @Email
         String email,
-        @ValidField(name = "Telegram", allowSpaces = false, maxSize = 50)
+        @Field(name = "Telegram", allowSpaces = false, maxSize = 50)
         String telegram) {}

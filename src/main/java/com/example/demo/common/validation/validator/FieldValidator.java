@@ -1,10 +1,10 @@
-package com.example.demo.validation.validator;
+package com.example.demo.common.validation.validator;
 
-import com.example.demo.validation.annotation.ValidField;
+import com.example.demo.common.validation.annotation.Field;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 
-public class FieldValidator implements ConstraintValidator<ValidField, String> {
+public class FieldValidator implements ConstraintValidator<Field, String> {
 
     private String fieldName;
     private boolean nullable;
@@ -13,7 +13,7 @@ public class FieldValidator implements ConstraintValidator<ValidField, String> {
     private int maxSize;
 
     @Override
-    public void initialize(ValidField constraintAnnotation) {
+    public void initialize(Field constraintAnnotation) {
         this.fieldName = constraintAnnotation.name();
         this.nullable = constraintAnnotation.nullable();
         this.allowSpaces = constraintAnnotation.allowSpaces();
