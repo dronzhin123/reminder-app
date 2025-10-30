@@ -1,11 +1,11 @@
 package com.example.demo.user.controller;
 
+import com.example.demo.common.wrapper.ApiResponseWrapper;
 import com.example.demo.user.model.dto.PasswordUpdateDto;
 import com.example.demo.user.model.dto.UserReadDto;
 import com.example.demo.user.model.dto.UserUpdateDto;
 import com.example.demo.user.model.entity.User;
 import com.example.demo.user.service.UserService;
-import com.example.demo.common.wrapper.ApiResponseWrapper;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

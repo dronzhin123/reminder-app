@@ -1,7 +1,7 @@
 package com.example.demo.reminder.scheduler;
 
-import com.example.demo.reminder.model.entity.Reminder;
 import com.example.demo.reminder.job.ReminderJob;
+import com.example.demo.reminder.model.entity.Reminder;
 import lombok.RequiredArgsConstructor;
 import org.quartz.*;
 import org.springframework.stereotype.Service;

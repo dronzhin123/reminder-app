@@ -1,7 +1,7 @@
 package com.example.demo.reminder.model.dto;
 
-import com.example.demo.reminder.model.entity.Reminder;
 import com.example.demo.common.validation.annotation.Field;
+import com.example.demo.reminder.model.entity.Reminder;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotNull;
 

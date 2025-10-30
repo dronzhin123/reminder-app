@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 public class TelegramReminderSender implements BaseReminderSender {
 
     @Override
-    public void sendMassage(Reminder reminder) {
+    public void sendMessage(Reminder reminder) {
         log.info("[TELEGRAM] Напоминание {} для пользователя {} на {}",
                 reminder.getId(),
                 reminder.getUser().getUsername(),

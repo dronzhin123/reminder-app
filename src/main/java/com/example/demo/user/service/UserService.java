@@ -2,10 +2,10 @@ package com.example.demo.user.service;
 
 import com.example.demo.user.exception.UserAlreadyExistsException;
 import com.example.demo.user.exception.UserNotFoundException;
-import com.example.demo.user.repository.UserRepository;
 import com.example.demo.user.model.dto.*;
 import com.example.demo.user.model.entity.User;
 import com.example.demo.user.model.mapper.UserMapper;
+import com.example.demo.user.repository.UserRepository;
 import com.example.demo.user.specification.UserSpecification;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

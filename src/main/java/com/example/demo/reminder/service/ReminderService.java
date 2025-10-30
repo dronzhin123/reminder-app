@@ -4,16 +4,17 @@ import com.example.demo.reminder.event.dto.ReminderEventDto;
 import com.example.demo.reminder.exception.NoContactForSenderException;
 import com.example.demo.reminder.exception.ReminderAlreadyExistsException;
 import com.example.demo.reminder.exception.ReminderNotFoundException;
-import com.example.demo.reminder.repository.ReminderRepository;
-import com.example.demo.reminder.specification.ReminderSpecification;
 import com.example.demo.reminder.model.dto.ReminderCreateDto;
 import com.example.demo.reminder.model.dto.ReminderFilterDto;
 import com.example.demo.reminder.model.dto.ReminderReadDto;
 import com.example.demo.reminder.model.dto.ReminderUpdateDto;
 import com.example.demo.reminder.model.entity.Reminder;
 import com.example.demo.reminder.model.mapper.ReminderMapper;
+import com.example.demo.reminder.repository.ReminderRepository;
+import com.example.demo.reminder.specification.ReminderSpecification;
 import com.example.demo.user.model.entity.User;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -24,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ReminderService {
 
     private final ReminderRepository reminderRepository;
@@ -36,8 +38,15 @@ public class ReminderService {
     }
 
     public Page<ReminderReadDto> getReminders(ReminderFilterDto dto, User user) {
+        log.info("1");
         Specification<Reminder> specification = ReminderSpecification.withFilter(dto, user.getId());
-        PageRequest pageRequest = PageRequest.of(dto.getPage(), dto.getSize(), Sort.by(dto.getDirection(), dto.getSortField().value));
+        log.info("2");
+        Sort.Direction direction = Sort.Direction.fromString(dto.getDirection());
+        log.info("3");
+        Sort sort = Sort.by(direction, dto.getSortField());
+        log.info("4");
+        PageRequest pageRequest = PageRequest.of(dto.getPage(), dto.getSize(), sort);
+        log.info("5");
         return reminderRepository.findAll(specification, pageRequest).map(reminderMapper::toDto);
     }
 
@@ -68,16 +77,6 @@ public class ReminderService {
         reminderRepository.delete(reminder);
     }
 
-    @Transactional
-    public void updateStatus(Reminder reminder, Reminder.Status status) {
-        reminder.setStatus(status);
-        reminderRepository.save(reminder);
-    }
-
-    public Reminder findWithUserById(Long reminderId) {
-        return reminderRepository.findWithUserById(reminderId).orElseThrow(() -> new ReminderNotFoundException(reminderId));
-    }
-
     private Reminder findByIdAndUserId(Long reminderId, Long userId) {
         return reminderRepository.findByIdAndUserId(reminderId, userId).orElseThrow(() -> new ReminderNotFoundException(reminderId));
     }
@@ -97,6 +96,16 @@ public class ReminderService {
         if (reminderRepository.count(specification) > 0) {
             throw new ReminderAlreadyExistsException("title", title);
         }
+    }
+
+    @Transactional
+    public void updateStatus(Reminder reminder, Reminder.Status status) {
+        reminder.setStatus(status);
+        reminderRepository.save(reminder);
+    }
+
+    public Reminder findById(Long reminderId) {
+        return reminderRepository.findWithUserById(reminderId).orElseThrow(() -> new ReminderNotFoundException(reminderId));
     }
 
 }

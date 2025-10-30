@@ -32,13 +32,14 @@ public class ReminderJob implements Job {
     @Override
     public void execute(JobExecutionContext context) {
         Long reminderId = context.getMergedJobDataMap().getLong("reminderId");
-        Reminder reminder = reminderService.findWithUserById(reminderId);
+        Reminder reminder = reminderService.findById(reminderId);
 
         try {
-            senders.get(reminder.getSender()).sendMassage(reminder);
+            senders.get(reminder.getSender()).sendMessage(reminder);
             reminderService.updateStatus(reminder, Reminder.Status.SENT);
         } catch (Exception e) {
             reminderService.updateStatus(reminder, Reminder.Status.ERROR);
         }
     }
+
 }

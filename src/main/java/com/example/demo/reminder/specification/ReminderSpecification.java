@@ -12,7 +12,7 @@ public class ReminderSpecification {
 
     private static Specification<Reminder> hasUserId(Long userId) {
         return (root, query, cb) -> (userId == null) ? cb.conjunction() :
-                cb.equal(root.get("userId"), userId);
+                cb.equal(root.get("id"), userId);
     }
 
     private static Specification<Reminder> createdAtAfter(LocalDateTime start) {
@@ -35,12 +35,12 @@ public class ReminderSpecification {
                 cb.lessThanOrEqualTo(root.get("remindAt"), end);
     }
 
-    private static Specification<Reminder> hasStatus(String status) {
+    private static Specification<Reminder> hasStatus(Reminder.Status status) {
         return (root, query, cb) -> (status == null) ? cb.conjunction() :
                 cb.equal(root.get("status"), status);
     }
 
-    private static Specification<Reminder> hasSender(String sender) {
+    private static Specification<Reminder> hasSender(Reminder.Sender sender) {
         return (root, query, cb) -> (sender == null) ? cb.conjunction() :
                 cb.equal(root.get("sender"), sender);
     }
@@ -66,8 +66,8 @@ public class ReminderSpecification {
                 .and(createdAtBefore(dto.getCreatedAtEnd()))
                 .and(remindAtAfter(dto.getRemindAtStart()))
                 .and(remindAtBefore(dto.getRemindAtEnd()))
-                .and(hasStatus(dto.getStatus() != null ? dto.getStatus().name() : null))
-                .and(hasSender(dto.getSender() != null ? dto.getSender().name() : null))
+                .and(hasStatus(dto.getStatus()))
+                .and(hasSender(dto.getSender()))
                 .and(containsKeyword(dto.getKeyword()));
     }
 
