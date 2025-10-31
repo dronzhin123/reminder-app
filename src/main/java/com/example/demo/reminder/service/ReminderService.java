@@ -13,45 +13,51 @@ import com.example.demo.reminder.model.mapper.ReminderMapper;
 import com.example.demo.reminder.repository.ReminderRepository;
 import com.example.demo.reminder.specification.ReminderSpecification;
 import com.example.demo.user.model.entity.User;
+import com.example.demo.user.service.UserService;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class ReminderService {
 
     private final ReminderRepository reminderRepository;
     private final ReminderMapper reminderMapper;
+    private final UserService userService;
     private final ApplicationEventPublisher eventPublisher;
 
-    public ReminderReadDto getReminder(Long reminderId, User user) {
-        Reminder reminder = findByIdAndUserId(reminderId, user.getId());
+    public Reminder getReminder(Long reminderId, Long userId) {
+        return reminderRepository.findByIdAndUserId(reminderId, userId).orElseThrow(() -> new ReminderNotFoundException(reminderId));
+    }
+
+    public Reminder getReminder(Long reminderId) {
+        return reminderRepository.findWithUserById(reminderId).orElseThrow(() -> new ReminderNotFoundException(reminderId));
+    }
+
+    public ReminderReadDto getReminder(Long reminderId, Authentication authentication) {
+        Long userId = userService.getCurrentUserId(authentication);
+        Reminder reminder = getReminder(reminderId, userId);
         return reminderMapper.toDto(reminder);
     }
 
-    public Page<ReminderReadDto> getReminders(ReminderFilterDto dto, User user) {
-        log.info("1");
-        Specification<Reminder> specification = ReminderSpecification.withFilter(dto, user.getId());
-        log.info("2");
-        Sort.Direction direction = Sort.Direction.fromString(dto.getDirection());
-        log.info("3");
-        Sort sort = Sort.by(direction, dto.getSortField());
-        log.info("4");
+    public Page<ReminderReadDto> getReminders(ReminderFilterDto dto, Authentication authentication) {
+        Long userId = userService.getCurrentUserId(authentication);
+        Specification<Reminder> specification = ReminderSpecification.withFilter(dto, userId);
+        Sort sort = createSort(dto.getDirection(), dto.getSortField());
         PageRequest pageRequest = PageRequest.of(dto.getPage(), dto.getSize(), sort);
-        log.info("5");
         return reminderRepository.findAll(specification, pageRequest).map(reminderMapper::toDto);
     }
 
     @Transactional
-    public ReminderReadDto createReminder(ReminderCreateDto dto, User user) {
+    public ReminderReadDto createReminder(ReminderCreateDto dto, Authentication authentication) {
+        User user = userService.getCurrentUser(authentication);
         validateSender(dto, user);
         validateTitle(dto.title(), user.getId(), null);
         Reminder reminder = reminderMapper.toReminder(dto, user);
@@ -61,24 +67,30 @@ public class ReminderService {
     }
 
     @Transactional
-    public ReminderReadDto updateReminder(Long reminderId, ReminderUpdateDto dto, User user) {
-        validateTitle(dto.title(), user.getId(), reminderId);
-        Reminder reminder = findByIdAndUserId(reminderId, user.getId());
+    public ReminderReadDto updateReminder(Long reminderId, ReminderUpdateDto dto, Authentication authentication) {
+        Long userId = userService.getCurrentUserId(authentication);
+        validateTitle(dto.title(), userId, reminderId);
+        Reminder reminder = getReminder(reminderId, userId);
         reminderMapper.update(reminder, dto);
-        reminder = reminderRepository.save(reminder);
         eventPublisher.publishEvent(new ReminderEventDto(reminder, ReminderEventDto.Type.UPDATED));
         return reminderMapper.toDto(reminder);
     }
 
     @Transactional
-    public void deleteReminder(Long reminderId, User user) {
-        Reminder reminder = findByIdAndUserId(reminderId, user.getId());
+    public void deleteReminder(Long reminderId, Authentication authentication) {
+        Long userId = userService.getCurrentUserId(authentication);
+        Reminder reminder = getReminder(reminderId, userId);
         eventPublisher.publishEvent(new ReminderEventDto(reminder, ReminderEventDto.Type.DELETED));
         reminderRepository.delete(reminder);
     }
 
-    private Reminder findByIdAndUserId(Long reminderId, Long userId) {
-        return reminderRepository.findByIdAndUserId(reminderId, userId).orElseThrow(() -> new ReminderNotFoundException(reminderId));
+    @Transactional
+    public void updateStatus(Reminder reminder, Reminder.Status status) {
+        reminder.setStatus(status);
+    }
+
+    private Sort createSort(String direction, String sortField) {
+        return Sort.by(Sort.Direction.fromString(direction), sortField);
     }
 
     private void validateSender(ReminderCreateDto dto, User user) {
@@ -96,16 +108,6 @@ public class ReminderService {
         if (reminderRepository.count(specification) > 0) {
             throw new ReminderAlreadyExistsException("title", title);
         }
-    }
-
-    @Transactional
-    public void updateStatus(Reminder reminder, Reminder.Status status) {
-        reminder.setStatus(status);
-        reminderRepository.save(reminder);
-    }
-
-    public Reminder findById(Long reminderId) {
-        return reminderRepository.findWithUserById(reminderId).orElseThrow(() -> new ReminderNotFoundException(reminderId));
     }
 
 }

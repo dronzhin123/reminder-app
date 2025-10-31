@@ -32,7 +32,7 @@ public class ReminderJob implements Job {
     @Override
     public void execute(JobExecutionContext context) {
         Long reminderId = context.getMergedJobDataMap().getLong("reminderId");
-        Reminder reminder = reminderService.findById(reminderId);
+        Reminder reminder = reminderService.getReminder(reminderId);
 
         try {
             senders.get(reminder.getSender()).sendMessage(reminder);

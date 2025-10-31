@@ -29,14 +29,20 @@ public class UserService {
     private final AuthenticationManager authenticationManager;
     private final PasswordEncoder passwordEncoder;
 
-    public User getUser(UserLoginDto dto) {
-        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(dto.username(), dto.password()));
-        return userRepository.findByUsername(dto.username()).orElseThrow(() -> new UserNotFoundException(dto.username()));
+    public Long getCurrentUserId(Authentication authentication) {
+        return Long.parseLong(authentication.getName());
     }
 
-    public User getUser(Authentication authentication) {
-        Long userId = Long.parseLong(authentication.getName());
+    public User getCurrentUser(Authentication authentication) {
+        Long userId = getCurrentUserId(authentication);
         return userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException(userId));
+    }
+
+    public Long authenticateAndGetCurrentUserId(UserLoginDto dto) {
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(dto.username(), dto.password())
+        );
+        return ((User) authentication.getPrincipal()).getId();
     }
 
     @Transactional
@@ -47,21 +53,23 @@ public class UserService {
     }
 
     @Transactional
-    public UserReadDto updateUser(User user, UserUpdateDto dto) {
+    public UserReadDto updateUser(UserUpdateDto dto, Authentication authentication) {
+        User user = getCurrentUser(authentication);
         validateUserNotExists(dto.username(), dto.email(), dto.telegram(), user.getId());
         userMapper.update(user, dto);
         return userMapper.toDto(userRepository.save(user));
     }
 
     @Transactional
-    public void updatePassword(User user, PasswordUpdateDto dto) {
+    public void updatePassword(PasswordUpdateDto dto, Authentication authentication) {
+        User user = getCurrentUser(authentication);
         user.setPassword(passwordEncoder.encode(dto.password()));
-        userRepository.save(user);
     }
 
     @Transactional
-    public void deleteUser(User user) {
-        userRepository.delete(user);
+    public void deleteUser(Authentication authentication) {
+        Long userId = getCurrentUserId(authentication);
+        userRepository.deleteById(userId);
     }
 
     private void validateUserNotExists(String username, String email, String telegram, Long userId) {
